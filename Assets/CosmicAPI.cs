@@ -284,7 +284,7 @@ public class CosmicAPI : MonoBehaviour
     void OnUser(string packet) {
         me = JsonConvert.DeserializeObject<Profile>(packet);
         Debug.Log("Logged in as " + me.username);
-        OnLogin();
+        if(OnLogin != null) OnLogin();
     }
 
     void Update() {
