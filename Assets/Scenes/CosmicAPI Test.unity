@@ -215,7 +215,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 844621786}
-  - {fileID: 1312105407}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -435,14 +434,127 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b12248ab292beba47a55a08c7f75f4d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  players: []
-  cards: []
-  me: 
-  id: 
-  roundLength: 0
-  round: 0
-  opponentIsBot: 0
-  activeGame: 0
+  cards:
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
+  - id: 0
+    cost: 0
+    damage: 0
+    hp: 0
+    rarity: 
+    image: {fileID: 0}
+    name: 
+    description: 
+    isRush: 0
+    isTaunt: 0
+    type: 0
+    element: 0
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,85 +638,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1312105406
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1312105407}
-  - component: {fileID: 1312105409}
-  - component: {fileID: 1312105408}
-  m_Layer: 5
-  m_Name: Info
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1312105407
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1312105406}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 436561388}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 401.56238, y: -176.22986}
-  m_SizeDelta: {x: 749.1357, y: 301.1105}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1312105408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1312105406}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 26
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 53
-    m_Alignment: 0
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Connection <b>status</b>
---- !u!222 &1312105409
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1312105406}
-  m_CullTransparentMesh: 1
 --- !u!1 &1646968759
 GameObject:
   m_ObjectHideFlags: 0
@@ -635,6 +668,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   api: {fileID: 860794983}
+  cardPrefab: {fileID: 3654678152717294937, guid: 9c2620e31b1ead94b8c893490aa351a7, type: 3}
+  canvas: {fileID: 436561384}
 --- !u!4 &1646968761
 Transform:
   m_ObjectHideFlags: 0

@@ -7,6 +7,7 @@ using UnityEngine;
 using NativeWebSocket;
 // JSON protocol to parse and pack packets from and to the server.
 using Newtonsoft.Json;
+using UnityEditor;
 
 public class Character {
     public string id;
@@ -40,7 +41,7 @@ public class Buff {
 public class Card {
     public int id, cost, damage, hp;
     public string rarity;
-    public Texture2D image = null;
+    public Sprite image = null;
     public string name, description;
     public bool isRush, isTaunt;
     public CardType type;
@@ -95,18 +96,18 @@ public class CosmicAPI : MonoBehaviour
     public Action<string, string, float> OnDamage { get; set; }
 
 
-    public Player[] players;
+    Player[] players;
 
-    public Card[] cards;
+    Card[] cards;
 
     // Client account ID
-    public string me;
+    string me;
     // Game ID
-    public string id;
-    public DateTime gameStarted, roundStarted;
-    public int roundLength, round;
-    public bool opponentIsBot;
-    public bool activeGame = false;
+    string id;
+    DateTime gameStarted, roundStarted;
+    int roundLength, round;
+    bool opponentIsBot;
+    bool activeGame = false;
 
     string token;
 
@@ -150,15 +151,25 @@ public class CosmicAPI : MonoBehaviour
     }
 
     public Card GetCard(int id) {
-       /* foreach(Card card in cards) {
+        foreach (Card card in cards) {
             if (card.id == id) return card;
-        }*/
+        }
         return null;
     }
 
     // Play a card from the hand
     public void PlayMinion(int id) {
         Debug.Log("Played minion ID: " + id);
+    }
+
+    // Gives you all the IDs of all the cards (For testing)
+    public int[] GetAllCardIDs() {
+
+        int[] cardIDs = new int[cards.Length];
+        for(int i = 0; i < cards.Length; i++) {
+            cardIDs[i] = cards[i].id;
+        }
+        return cardIDs;
     }
 
     // Play a spell card, only if the card is a targeted spell provide a target player or minion
@@ -187,7 +198,7 @@ public class CosmicAPI : MonoBehaviour
        
         ws.OnOpen += () => {
             Debug.Log("Connected to Cosmic server");
-            OnConnected();
+           
         };
 
         ws.OnMessage += (bytes) => {
@@ -196,11 +207,9 @@ public class CosmicAPI : MonoBehaviour
             SocketPackage package = JsonUtility.FromJson<SocketPackage>(message);
 
             switch (package.identifier) {
-
                 case "cards":
                     LoadCards(package.packet);
                     break;
-
             }
 
         };
@@ -216,10 +225,17 @@ public class CosmicAPI : MonoBehaviour
     }
 
     void LoadCards(string cardsJson) {
-        Card[] cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);   
+       
+        cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);   
         foreach(Card card in cards) {
-           
+            card.image = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/Textures/card-images/" + card.id + ".png", typeof(Sprite));
         }
+        OnConnected();
+    }
+
+    public Card[] GetCards() {
+        Debug.Log("Returned cards " + cards);
+        return cards;
     }
 
     void Send(string identifier) {
@@ -244,6 +260,7 @@ public class CosmicAPI : MonoBehaviour
         #if !UNITY_WEBGL || UNITY_EDITOR
             ws.DispatchMessageQueue();
         #endif
+
         
     }
 }
