@@ -65,6 +65,19 @@ public enum Rarity {
 }
 
 [Serializable]
+public class Profile {
+    public string id, username;
+    public int level, xp;
+    public int[] cards;
+    public bool admin;
+    public Record record;
+}
+[Serializable]
+public class Record {
+    public int wins, losses;
+}
+
+[Serializable]
 public class SocketPackage {
     public string identifier, packet, token;
 }
@@ -78,6 +91,8 @@ public class CosmicAPI : MonoBehaviour
 
     // On connection with the cosmic game server
     public Action OnConnected { get; set; }
+    // On User info
+    public Action OnLogin { get; set; }
     // On every game update from the server, not specifik
     public Action OnUpdate { get; set; }
     // When a new game starts (from main menu)
@@ -101,7 +116,7 @@ public class CosmicAPI : MonoBehaviour
     Card[] cards;
 
     // Client account ID
-    string me;
+    public Profile me;
     // Game ID
     string id;
     DateTime gameStarted, roundStarted;
@@ -117,14 +132,14 @@ public class CosmicAPI : MonoBehaviour
 
     public Player GetMe() {
         foreach(Player player in players) {
-            if (player.id == me) return player;
+            if (player.id == me.id) return player;
         }
         return null;
     }
 
     public Player GetOpponent() {
         foreach (Player player in players) {
-            if (player.id == me) return player;
+            if (player.id == me.id) return player;
         }
         return null;
     }
@@ -192,13 +207,16 @@ public class CosmicAPI : MonoBehaviour
     }
 
     async void Start() {
+
+        token = PlayerPrefs.GetString("token");
+
         // Create socket and input the game server URL
         ws = new WebSocket("wss://api.cosmic.ygstr.com");
 
        
         ws.OnOpen += () => {
             Debug.Log("Connected to Cosmic server");
-           
+            Login();
         };
 
         ws.OnMessage += (bytes) => {
@@ -210,6 +228,14 @@ public class CosmicAPI : MonoBehaviour
                 case "cards":
                     LoadCards(package.packet);
                     break;
+                case "new_token":
+                    token = package.packet;
+                    PlayerPrefs.SetString("token", token);
+                    Login();
+                break;
+                case "user":
+                OnUser(package.packet);
+                break;
             }
 
         };
@@ -234,7 +260,7 @@ public class CosmicAPI : MonoBehaviour
     }
 
     public Card[] GetCards() {
-        Debug.Log("Returned cards " + cards);
+  
         return cards;
     }
 
@@ -252,7 +278,13 @@ public class CosmicAPI : MonoBehaviour
     }
 
     void Login(/*string username, string password*/) {
+        Send("login");
+    }
 
+    void OnUser(string packet) {
+        me = JsonConvert.DeserializeObject<Profile>(packet);
+        Debug.Log("Logged in as " + me.username);
+        OnLogin();
     }
 
     void Update() {

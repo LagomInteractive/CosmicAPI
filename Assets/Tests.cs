@@ -15,7 +15,8 @@ public class Tests : MonoBehaviour
         api.OnConnected += () => {
             //api.StartTestGame();
             
-            Card[] cards = api.GetCards();
+            // Load all cards
+            /*Card[] cards = api.GetCards();
 
             for (int i = 0; i < cards.Length; i++) {
                 Card card = cards[i];
@@ -28,7 +29,7 @@ public class Tests : MonoBehaviour
                 testCard.transform.Find("Name").GetComponent<Text>().text = card.name;
                 testCard.transform.Find("Description").GetComponent<Text>().text = card.description;
                 testCard.transform.Find("Image").GetComponent<Image>().sprite = card.image;
-            }
+            }*/
         };
     }
    
