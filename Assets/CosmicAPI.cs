@@ -30,6 +30,7 @@ public class Player : Character {
     public int level, manaLeft, totalMana;
     public Card[] cards;
     public Minion[] minions;
+    public Profile profile;
 }
 
 [Serializable]
@@ -83,6 +84,19 @@ public class SocketPackage {
 }
 
 [Serializable]
+public class Game {
+    public string id;
+    public int gameStarted, roundStarted, roundLength, round;
+    public Player[] players;
+    public bool OpponentIsBot() {
+        foreach(Player player in this.players) {
+            if (player.isBot) return true;
+        }
+        return false;
+    }
+}
+
+[Serializable]
 public class CosmicAPI : MonoBehaviour
 {
 
@@ -121,8 +135,8 @@ public class CosmicAPI : MonoBehaviour
     string id;
     DateTime gameStarted, roundStarted;
     int roundLength, round;
-    bool opponentIsBot;
     bool activeGame = false;
+    Game game;
 
     string token;
 
@@ -163,6 +177,13 @@ public class CosmicAPI : MonoBehaviour
         }
 
         return characters;
+    }
+
+    public bool GameIsActive() {
+        return activeGame;
+    }
+    public Game GetGame() {
+        return game;
     }
 
     public Card GetCard(int id) {
@@ -256,17 +277,18 @@ public class CosmicAPI : MonoBehaviour
         foreach(Card card in cards) {
             card.image = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/Textures/card-images/" + card.id + ".png", typeof(Sprite));
         }
-        OnConnected();
+        if(OnConnected != null) OnConnected();
     }
 
     public Card[] GetCards() {
-  
         return cards;
     }
 
     void Send(string identifier) {
         Send(identifier, "");
     }
+
+
 
     void Send(string identifier, string data) {
         SocketPackage package = new SocketPackage();
