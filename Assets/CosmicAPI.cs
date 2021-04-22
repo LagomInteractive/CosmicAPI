@@ -44,7 +44,6 @@ public class Card {
     public string rarity;
     public Sprite image = null;
     public string name, description;
-    public bool isRush, isTaunt;
     public CardType type;
     public Element element;
 }
@@ -54,7 +53,7 @@ public enum CardType {
 }
 
 public enum Element {
-    Lunar, Solar, Zenith, Nova
+    Lunar, Solar, Zenith, Nova, rush, taunt
 }
 
 public enum Rarity {
@@ -89,7 +88,7 @@ public class Game {
     public int gameStarted, roundStarted, roundLength, round;
     public Player[] players;
     public bool OpponentIsBot() {
-        foreach(Player player in this.players) {
+        foreach (Player player in this.players) {
             if (player.isBot) return true;
         }
         return false;
@@ -97,8 +96,7 @@ public class Game {
 }
 
 [Serializable]
-public class CosmicAPI : MonoBehaviour
-{
+public class CosmicAPI : MonoBehaviour {
 
     // Socket connection wit the server
     WebSocket ws;
@@ -147,7 +145,7 @@ public class CosmicAPI : MonoBehaviour
     }
 
     public Player GetMe() {
-        foreach(Player player in players) {
+        foreach (Player player in players) {
             if (player.id == me.id) return player;
         }
         return null;
@@ -162,7 +160,7 @@ public class CosmicAPI : MonoBehaviour
 
     public Character GetCharacter(string id) {
         List<Character> characters = GetAllCharacters();
-        foreach(Character character in characters) {
+        foreach (Character character in characters) {
             if (character.id == id) return character;
         }
         return null;
@@ -174,8 +172,8 @@ public class CosmicAPI : MonoBehaviour
         foreach (Player player in players) {
             characters.Add(player);
             // Add all the players minions to the List
-            foreach(Minion minion in player.minions) characters.Add(minion);
-            
+            foreach (Minion minion in player.minions) characters.Add(minion);
+
         }
 
         return characters;
@@ -204,7 +202,7 @@ public class CosmicAPI : MonoBehaviour
     public int[] GetAllCardIDs() {
 
         int[] cardIDs = new int[cards.Length];
-        for(int i = 0; i < cards.Length; i++) {
+        for (int i = 0; i < cards.Length; i++) {
             cardIDs[i] = cards[i].id;
         }
         return cardIDs;
@@ -236,7 +234,7 @@ public class CosmicAPI : MonoBehaviour
         // Create socket and input the game server URL
         ws = new WebSocket("wss://api.cosmic.ygstr.com");
 
-       
+
         ws.OnOpen += () => {
             Debug.Log("Connected to Cosmic server");
             Login();
@@ -249,18 +247,18 @@ public class CosmicAPI : MonoBehaviour
 
             switch (package.identifier) {
                 case "cards":
-                    LoadCards(package.packet);
-                    break;
+                LoadCards(package.packet);
+                break;
                 case "new_token":
-                    token = package.packet;
-                    PlayerPrefs.SetString("token", token);
-                    Login();
+                token = package.packet;
+                PlayerPrefs.SetString("token", token);
+                Login();
                 break;
                 case "user":
-                    OnUser(package.packet);
+                OnUser(package.packet);
                 break;
                 case "login_fail":
-                    OnLoginFail?.Invoke();
+                OnLoginFail?.Invoke();
                 break;
             }
 
@@ -277,8 +275,8 @@ public class CosmicAPI : MonoBehaviour
     }
 
     void LoadCards(string cardsJson) {
-        cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);   
-        foreach(Card card in cards) {
+        cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);
+        foreach (Card card in cards) {
             card.image = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/Textures/card-images/" + card.id + ".png", typeof(Sprite));
         }
         OnConnected?.Invoke();
@@ -321,10 +319,10 @@ public class CosmicAPI : MonoBehaviour
 
     void Update() {
         // Makes sure incoming messages are received
-        #if !UNITY_WEBGL || UNITY_EDITOR
-            ws.DispatchMessageQueue();
-        #endif
+#if !UNITY_WEBGL || UNITY_EDITOR
+        ws.DispatchMessageQueue();
+#endif
 
-        
+
     }
 }
