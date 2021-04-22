@@ -1,1 +1,1 @@
-![Header image](Assets/Textures/cosmic-api-logo.png)
+![Header image](Assets/Textures/banner.png)
