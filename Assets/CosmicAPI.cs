@@ -107,6 +107,8 @@ public class CosmicAPI : MonoBehaviour
     public Action OnConnected { get; set; }
     // On User info
     public Action OnLogin { get; set; }
+    // When the login attempt fails
+    public Action OnLoginFail { get; set; }
     // On every game update from the server, not specifik
     public Action OnUpdate { get; set; }
     // When a new game starts (from main menu)
@@ -255,7 +257,10 @@ public class CosmicAPI : MonoBehaviour
                     Login();
                 break;
                 case "user":
-                OnUser(package.packet);
+                    OnUser(package.packet);
+                break;
+                case "login_fail":
+                    OnLoginFail?.Invoke();
                 break;
             }
 
@@ -272,12 +277,11 @@ public class CosmicAPI : MonoBehaviour
     }
 
     void LoadCards(string cardsJson) {
-       
         cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);   
         foreach(Card card in cards) {
             card.image = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/Textures/card-images/" + card.id + ".png", typeof(Sprite));
         }
-        if(OnConnected != null) OnConnected();
+        OnConnected?.Invoke();
     }
 
     public Card[] GetCards() {
@@ -291,26 +295,32 @@ public class CosmicAPI : MonoBehaviour
 
 
     void Send(string identifier, string data) {
-        SocketPackage package = new SocketPackage();
-        package.identifier = identifier;
-        package.packet = data;
-        package.token = token;
+        SocketPackage package = new SocketPackage {
+            identifier = identifier,
+            packet = data,
+            token = token
+        };
         string json = JsonUtility.ToJson(package);
         ws.SendText(json);
     }
 
     void Login(/*string username, string password*/) {
-        Send("login");
+        Send("login_with_token");
     }
 
     void OnUser(string packet) {
         me = JsonConvert.DeserializeObject<Profile>(packet);
         Debug.Log("Logged in as " + me.username);
-        if(OnLogin != null) OnLogin();
+        OnLogin?.Invoke();
+    }
+
+    public void Login(string username, string password) {
+        SocketPackage package = new SocketPackage() { identifier = "login", packet = username, token = password };
+        ws.SendText(JsonConvert.SerializeObject(package));
     }
 
     void Update() {
-        
+        // Makes sure incoming messages are received
         #if !UNITY_WEBGL || UNITY_EDITOR
             ws.DispatchMessageQueue();
         #endif
