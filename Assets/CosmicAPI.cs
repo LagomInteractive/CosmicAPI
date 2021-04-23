@@ -276,6 +276,7 @@ public class CosmicAPI : MonoBehaviour {
 
     void LoadCards(string cardsJson) {
         cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);
+        Debug.Log("Loaded cards");
         foreach (Card card in cards) {
             card.image = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/Textures/card-images/" + card.id + ".png", typeof(Sprite));
         }
@@ -289,8 +290,6 @@ public class CosmicAPI : MonoBehaviour {
     void Send(string identifier) {
         Send(identifier, "");
     }
-
-
 
     void Send(string identifier, string data) {
         SocketPackage package = new SocketPackage {

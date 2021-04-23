@@ -17,10 +17,13 @@ public class Tests : MonoBehaviour {
     void Start() {
         api.OnLogin += () => {
             GameObject.Find("LoggedInStatus").GetComponent<Text>().text = "Logged in as " + api.me.username;
-            Debug.Log(api.me.cards.Length);
             wrongPasswordWarning.gameObject.SetActive(false);
             usernameInput.text = api.me.username;
             passwordInput.text = "";
+        };
+
+        api.OnCard += (int id) => {
+            Debug.Log("Oncard called with id " + id);
         };
 
         loginButton.onClick.AddListener(() => {
@@ -31,6 +34,7 @@ public class Tests : MonoBehaviour {
             wrongPasswordWarning.gameObject.SetActive(true);
 
         };
+
     }
 
 }
