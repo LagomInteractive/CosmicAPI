@@ -51,25 +51,34 @@ public class Tests : MonoBehaviour {
             wrongPasswordWarning.gameObject.SetActive(true);
         };
 
-        api.OnEverythingLoaded += () => {
-            Debug.Log("Everything loaded!");
-        };
-
         api.OnGameStart += () => {
             Debug.Log("New game started!");
-            Debug.Log("My deck size: " + api.GetPlayer().deck.Length);
+        };
+
+        api.OnOpponentCard += () => {
+            Debug.Log("Opponent drew a card");
+        };
+
+        api.OnCard += (cardId) => {
+            Debug.Log("Drew a card: " + api.GetCard(cardId).name);
         };
 
         api.OnTurn += (attackingPlayer) => {
-            Debug.Log("New round starting! " + attackingPlayer + " is attacking");
+            string attackingPlayerName = "Opponent is";
+            if (attackingPlayer == api.GetMe().id) attackingPlayerName = "You are";
+            Debug.Log("New round (" + api.GetGame().round + ") starting! " + attackingPlayerName + " attacking!");
         };
+
+
 
 
 
     }
 
     public void SpawnRandomCard() {
-        api.InstantiateWorldCard(api.GetAllCardIDs()[cardIndex++]);
+        GameObject card = api.InstantiateWorldCard(api.GetAllCardIDs()[cardIndex % api.GetAllCardIDs().Length]);
+        cardIndex++;
+        card.transform.position = card.transform.position + new Vector3(UnityEngine.Random.Range(-17, 17), UnityEngine.Random.Range(-5, 8), 0);
     }
 
 }

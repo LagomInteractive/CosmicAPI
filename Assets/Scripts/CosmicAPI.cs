@@ -28,7 +28,7 @@ public class Player : Character {
     public string name;
     public bool isBot;
     public int level, manaLeft, totalMana;
-    public Card[] cards;
+    public int[] cards;
     public int[] deck;
     public Minion[] minions;
     public Profile profile;
@@ -131,8 +131,10 @@ public class CosmicAPI : MonoBehaviour {
     public Action<string> OnMinionSpawned { get; set; }
     // UUID Minion
     public Action<string> OnMinionDeath { get; set; }
-    // Card ID
+    // When the client draws a card from the deck, int is the card ID
     public Action<int> OnCard { get; set; }
+    // When the opponent draws a card (card is secret)
+    public Action OnOpponentCard { get; set; }
     // UUID Attacking Player
     public Action<string> OnTurn { get; set; }
     // UUID Winning player
@@ -147,18 +149,30 @@ public class CosmicAPI : MonoBehaviour {
     // List of all cards in the game
     Card[] cards;
 
-    // Client account ID
+    // Client cosmic account
     Profile me;
 
-    // The active game
+    // The active game (if == null the game is not active)
     Game game;
 
+    // The last calculated ping in ms
     int ping;
+    // If the cards are loaded
     bool cardsLoaded;
+    // If the user is connected and logged in
     bool loggedIn;
 
+    // The user login token, stored in PlayerPrefs.String("token")
     string token;
+    // Used to track ping delay
     System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
+
+    // The time difference between the local clock on this clien and the server clock
+    // Game times are tracked in date time, since the clock on the server and client will sometimes not
+    // line up on the millisecond, this gives us the diffrence and is used to calculate time left on 
+    // a round for example. 
+    long timeDifference = 0;
 
     public void StartTestGame() {
         Send("start_test");
@@ -347,9 +361,16 @@ public class CosmicAPI : MonoBehaviour {
     void GameUpdate(string json) {
         Game update = JsonConvert.DeserializeObject<Game>(json);
         game = update;
+        StartCoroutine(RunEvents(game.events));
+        // Clear events for next update
+        game.events = new GameEvent[0];
+    }
 
-        foreach (GameEvent gameEvent in game.events) {
-
+    // Runs all events (Usually just 1 event in total)
+    // If there are more than 1 event, a delay is placed between each
+    IEnumerator RunEvents(GameEvent[] events) {
+        foreach (GameEvent gameEvent in events) {
+            //Debug.Log("Handling event " + gameEvent.identifier);
             switch (gameEvent.identifier) {
                 case "game_start":
                     OnGameStart?.Invoke();
@@ -357,16 +378,23 @@ public class CosmicAPI : MonoBehaviour {
                 case "next_turn":
                     OnTurn(gameEvent.values["attacking_player"]);
                     break;
+                case "player_deal_card":
+                    OnPlayerDealCard(gameEvent.values);
+                    break;
             }
-
+            yield return new WaitForSeconds(.5f);
         }
-
-        // Clear events
-        game.events = new GameEvent[0];
-
     }
 
-
+    void OnPlayerDealCard(Dictionary<string, string> info) {
+        if (info["player"] == me.id) {
+            // Client was dealt a card
+            OnCard(Int32.Parse(info["card"]));
+        } else {
+            // Opponent was dealt a card
+            OnOpponentCard();
+        }
+    }
 
     void LoadCards(string cardsJson) {
         cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);
