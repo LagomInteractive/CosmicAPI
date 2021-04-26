@@ -1,0 +1,442 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+// Websockets to connect with the server
+using NativeWebSocket;
+// JSON protocol to parse and pack packets from and to the server.
+using Newtonsoft.Json;
+using UnityEditor;
+
+public class Character {
+    public string id;
+    public int hp;
+    public bool isAttacking, hasAttacked, hasBeenAttacked;
+    public Buff buff;
+}
+
+[Serializable]
+public class Minion : Character {
+    public int origin, spawnRound;
+    public bool canSacrifice;
+    public Player owner;
+}
+
+[Serializable]
+public class Player : Character {
+    public string name;
+    public bool isBot;
+    public int level, manaLeft, totalMana;
+    public Card[] cards;
+    public int[] deck;
+    public Minion[] minions;
+    public Profile profile;
+}
+
+[Serializable]
+public class Buff {
+    public int sacrifices, damage, mana;
+}
+
+[Serializable]
+public class Card {
+    public int id, cost, damage, hp;
+    public string rarity;
+    public Sprite image = null;
+    public string name, description;
+    public CardType type;
+    public Element element;
+}
+
+public enum CardType {
+    Minion, TargetSpell, AOESpell
+}
+
+public enum Element {
+    Lunar, Solar, Zenith, Nova, rush, taunt
+}
+
+public enum Rarity {
+    Common,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary
+}
+
+[Serializable]
+public class Profile {
+    public string id, username;
+    public int level, xp;
+    public int[] cards;
+    public bool admin;
+    public Record record;
+}
+[Serializable]
+public class Record {
+    public int wins, losses;
+}
+
+[Serializable]
+public class SocketPackage {
+    public string identifier, packet, token;
+}
+
+[Serializable]
+public class Game {
+    public string id;
+    public long gameStarted, roundStarted;
+    public int roundLength, round;
+    public Player[] players;
+    public GameEvent[] events;
+    public bool OpponentIsBot() {
+        foreach (Player player in this.players) {
+            if (player.isBot) return true;
+        }
+        return false;
+    }
+}
+
+[Serializable]
+public class GameEvent {
+    public string identifier;
+    public Dictionary<string, string> values;
+}
+
+[Serializable]
+public class CosmicAPI : MonoBehaviour {
+
+    public GameObject cardPrefab;
+
+    // Socket connection wit the server
+    WebSocket ws;
+
+    // On everything loaded (Logged in & Cards loaded)
+    public Action OnEverythingLoaded { get; set; }
+
+    // On connection with the cosmic game server
+    public Action OnConnected { get; set; }
+    // When the client loses connection to the server socket
+    public Action OnDisconnected { get; set; }
+    // On User info
+    public Action OnLogin { get; set; }
+    // When the login attempt fails
+    public Action OnLoginFail { get; set; }
+    // On every game update from the server, not specifik
+    public Action OnUpdate { get; set; }
+    // When a new game starts (from main menu)
+    public Action OnGameStart { get; set; }
+    // UUID Minion
+    public Action<string> OnMinionSpawned { get; set; }
+    // UUID Minion
+    public Action<string> OnMinionDeath { get; set; }
+    // Card ID
+    public Action<int> OnCard { get; set; }
+    // UUID Attacking Player
+    public Action<string> OnTurn { get; set; }
+    // UUID Winning player
+    public Action<string> OnGameEnd { get; set; }
+    // UUID from, UUID to, float amount
+    public Action<string, string, float> OnDamage { get; set; }
+
+
+    // Diagnostics
+    public Action<int> OnPing { get; set; }
+
+    // List of all cards in the game
+    Card[] cards;
+
+    // Client account ID
+    Profile me;
+
+    // The active game
+    Game game;
+
+    int ping;
+    bool cardsLoaded;
+    bool loggedIn;
+
+    string token;
+    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
+    public void StartTestGame() {
+        Send("start_test");
+    }
+
+    // Get client player in a game
+    public Player GetPlayer() {
+        foreach (Player player in game.players) {
+            if (player.id == me.id) return player;
+        }
+        return null;
+    }
+
+    // Get my user profile
+    public Profile GetMe() {
+        return me;
+    }
+
+    public Player GetOpponent() {
+        foreach (Player player in game.players) {
+            if (player.id == me.id) return player;
+        }
+        return null;
+    }
+
+    // Get any player or minion on the field (from ID)
+    public Character GetCharacter(string id) {
+        List<Character> characters = GetAllCharacters();
+        foreach (Character character in characters) {
+            if (character.id == id) return character;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Get a List of all characters (Players and minions on the field)
+    /// </summary>
+    public List<Character> GetAllCharacters() {
+        List<Character> characters = new List<Character>();
+        // Get all players and add them the the List
+        foreach (Player player in game.players) {
+            characters.Add(player);
+            // Add all the players minions to the List
+            foreach (Minion minion in player.minions) characters.Add(minion);
+
+        }
+
+        return characters;
+    }
+
+    /// <summary>
+    /// If the user is currently in a game or not
+    /// </summary>
+    public bool IsInGame() {
+        return game != null;
+    }
+
+    /// <summary>
+    /// Get the current game with all of its info
+    /// </summary>
+    public Game GetGame() {
+        return game;
+    }
+
+    /// <summary>
+    /// Get information about a card
+    /// </summary>
+    public Card GetCard(int id) {
+        foreach (Card card in cards) {
+            if (card.id == id) return card;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Play a minion card from the hand
+    /// </summary>
+    public void PlayMinion(int id) {
+        Debug.Log("Played minion ID: " + id);
+    }
+
+    /// <summary>
+    /// Gives you all card ids (For testing)
+    /// </summary>
+    public int[] GetAllCardIDs() {
+
+        int[] cardIDs = new int[cards.Length];
+        for (int i = 0; i < cards.Length; i++) {
+            cardIDs[i] = cards[i].id;
+        }
+        return cardIDs;
+    }
+
+    /// <summary>
+    /// Play a spell card, only if the card is a targeted spell provide a target player or minion
+    /// </summary>
+    public void PlaySpell(int id, string target = null) {
+        Debug.Log("Played spell: " + id + " targeted: " + target);
+    }
+
+    /// <summary>
+    /// Sacrifice a minion
+    /// </summary>
+    public void Sacrifice(string id) {
+        Debug.Log("Sacrificed minion ID: " + id);
+    }
+
+    /// <summary>
+    /// End the round early
+    /// </summary>
+    public void EndRound() {
+        Debug.Log("Ended round");
+    }
+
+    // Try to reconnect if it loses conection to the server
+    IEnumerator Reconnect() {
+        yield return new WaitForSeconds(1);
+        ws.Connect();
+    }
+
+    public void Ping() {
+        stopwatch.Reset();
+        stopwatch.Start();
+        Send("ping");
+    }
+
+    async void Start() {
+
+        token = PlayerPrefs.GetString("token");
+
+        // Create socket and input the game server URL
+        ws = new WebSocket("wss://api.cosmic.ygstr.com");
+
+
+        ws.OnOpen += () => {
+            Debug.Log("Connected to Cosmic server");
+            OnConnected?.Invoke();
+            Login();
+        };
+
+        ws.OnMessage += (bytes) => {
+
+            string message = System.Text.Encoding.UTF8.GetString(bytes);
+            SocketPackage package = JsonUtility.FromJson<SocketPackage>(message);
+
+            switch (package.identifier) {
+                case "ping":
+                    stopwatch.Stop();
+                    OnPing?.Invoke((int)stopwatch.ElapsedMilliseconds);
+                    break;
+                case "cards":
+                    LoadCards(package.packet);
+                    break;
+                case "new_token":
+                    token = package.packet;
+                    PlayerPrefs.SetString("token", token);
+                    Login();
+                    break;
+                case "user":
+                    OnUser(package.packet);
+                    break;
+                case "login_fail":
+                    OnLoginFail?.Invoke();
+                    loggedIn = false;
+                    break;
+                case "game_update":
+                    GameUpdate(package.packet);
+                    break;
+            }
+
+        };
+
+
+        ws.OnClose += (e) => {
+            Debug.Log("Connection closed");
+            loggedIn = false;
+            OnDisconnected?.Invoke();
+            StartCoroutine(Reconnect());
+        };
+
+        // Connect to the server
+        await ws.Connect();
+    }
+
+    // Game update from the server
+    void GameUpdate(string json) {
+        Game update = JsonConvert.DeserializeObject<Game>(json);
+        game = update;
+
+        foreach (GameEvent gameEvent in game.events) {
+
+            switch (gameEvent.identifier) {
+                case "game_start":
+                    OnGameStart?.Invoke();
+                    break;
+                case "next_turn":
+                    OnTurn(gameEvent.values["attacking_player"]);
+                    break;
+            }
+
+        }
+
+        // Clear events
+        game.events = new GameEvent[0];
+
+    }
+
+
+
+    void LoadCards(string cardsJson) {
+        cards = JsonConvert.DeserializeObject<Card[]>(cardsJson);
+        foreach (Card card in cards) {
+            card.image = Resources.Load<Sprite>("card-images/" + card.id);
+        }
+        cardsLoaded = true;
+        OnConnected?.Invoke();
+        CallEverythingLoaded();
+    }
+
+    void CallEverythingLoaded() {
+        if (cardsLoaded && loggedIn && ws.State == WebSocketState.Open) OnEverythingLoaded?.Invoke();
+    }
+
+
+
+    public Card[] GetCards() {
+        return cards;
+    }
+
+    void Send(string identifier) {
+        Send(identifier, "");
+    }
+
+    public GameObject InstantiateWorldCard(int id) {
+        return this.InstantiateWorldCard(id, null);
+    }
+    public GameObject InstantiateWorldCard(int id, Transform parent) {
+        Card card = GetCard(id);
+        GameObject worldCard = parent == null ? Instantiate(cardPrefab) : Instantiate(cardPrefab, parent);
+
+        worldCard.GetComponent<WorldCard>().Setup(id, this);
+
+        return worldCard;
+    }
+
+    void Send(string identifier, string data) {
+        SocketPackage package = new SocketPackage {
+            identifier = identifier,
+            packet = data,
+            token = token
+        };
+        string json = JsonUtility.ToJson(package);
+        ws.SendText(json);
+    }
+
+
+
+    void OnUser(string packet) {
+        me = JsonConvert.DeserializeObject<Profile>(packet);
+        loggedIn = true;
+        Debug.Log("Logged in as " + me.username);
+        OnLogin?.Invoke();
+        CallEverythingLoaded();
+    }
+
+    void Login() {
+        Send("login_with_token");
+    }
+
+    public void Login(string username, string password) {
+        SocketPackage package = new SocketPackage() { identifier = "login", packet = username, token = password };
+        ws.SendText(JsonConvert.SerializeObject(package));
+    }
+
+    void Update() {
+        // Makes sure incoming messages are received
+#if !UNITY_WEBGL || UNITY_EDITOR
+        ws.DispatchMessageQueue();
+#endif
+    }
+}
