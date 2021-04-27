@@ -20,13 +20,16 @@ public class Character {
 public class Minion : Character {
     public int origin, spawnRound;
     public bool canSacrifice;
-    public Player owner;
+    public string owner;
+    Player GetOwner(CosmicAPI api) {
+        return (Player)api.GetCharacter(owner);
+    }
 }
 
 [Serializable]
 public class Player : Character {
     public string name;
-    public bool isBot;
+    public bool isBot, turn;
     public int level, manaLeft, totalMana;
     public int[] cards;
     public int[] deck;
@@ -87,7 +90,7 @@ public class SocketPackage {
 public class Game {
     public string id;
     public long gameStarted, roundStarted;
-    public int roundLength, round;
+    public int roundLength, round, turn;
     public Player[] players;
     public GameEvent[] events;
     public bool OpponentIsBot() {
@@ -281,10 +284,10 @@ public class CosmicAPI : MonoBehaviour {
     }
 
     /// <summary>
-    /// End the round early
+    /// End the turn early
     /// </summary>
-    public void EndRound() {
-        Debug.Log("Ended round");
+    public void EndTurn() {
+        Send("end_turn");
     }
 
     // Try to reconnect if it loses conection to the server
@@ -361,16 +364,21 @@ public class CosmicAPI : MonoBehaviour {
     void GameUpdate(string json) {
         Game update = JsonConvert.DeserializeObject<Game>(json);
         game = update;
+
+        // Coroutine because the events have a spacer delay
         StartCoroutine(RunEvents(game.events));
+
         // Clear events for next update
         game.events = new GameEvent[0];
+
+        OnUpdate?.Invoke();
     }
 
     // Runs all events (Usually just 1 event in total)
     // If there are more than 1 event, a delay is placed between each
     IEnumerator RunEvents(GameEvent[] events) {
         foreach (GameEvent gameEvent in events) {
-            //Debug.Log("Handling event " + gameEvent.identifier);
+            Debug.Log("Handling event " + gameEvent.identifier);
             switch (gameEvent.identifier) {
                 case "game_start":
                     OnGameStart?.Invoke();

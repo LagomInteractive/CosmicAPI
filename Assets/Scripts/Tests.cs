@@ -15,7 +15,11 @@ public class Tests : MonoBehaviour {
     public Button loginButton;
     public Text wrongPasswordWarning, pingText;
 
+    public Transform cardHand;
+    public Text stats;
+
     int cardIndex = 0;
+    int handIndex = 0;
 
     void Start() {
         api.OnLogin += () => {
@@ -60,7 +64,11 @@ public class Tests : MonoBehaviour {
         };
 
         api.OnCard += (cardId) => {
-            Debug.Log("Drew a card: " + api.GetCard(cardId).name);
+            Card card = api.GetCard(cardId);
+            GameObject cardObject = api.InstantiateWorldCard(cardId, cardHand);
+            cardObject.transform.position = new Vector3(handIndex * 2, 0, 0) + cardObject.transform.position;
+            handIndex++;
+
         };
 
         api.OnTurn += (attackingPlayer) => {
@@ -69,7 +77,15 @@ public class Tests : MonoBehaviour {
             Debug.Log("New round (" + api.GetGame().round + ") starting! " + attackingPlayerName + " attacking!");
         };
 
-
+        api.OnUpdate += () => {
+            Game game = api.GetGame();
+            Player me = api.GetPlayer();
+            stats.text =
+            "Mana: " + me.manaLeft + "/" + me.totalMana + "\n" +
+            "Round: " + game.round + "\n" +
+            "Attacking: " + (me.turn ? "You" : "Opponent") + "\n" +
+            "Opponent cards: " + api.GetOpponent().cards.Length;
+        };
 
 
 
